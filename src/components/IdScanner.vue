@@ -4,7 +4,7 @@
 
     <div class="camera-section">
       <!-- 摄像头视频流 -->
-      <video ref="video" width="320" height="240" autoplay playsinline class="video-feed"></video>
+      <video ref="video" width="85.6" height="54" autoplay playsinline class="video-feed"></video>
       <div class="capture-buttons">
         <button @click="captureFront" :disabled="!stream">拍摄正面</button>
         <button @click="captureBack" :disabled="!stream">拍摄反面</button>
@@ -79,11 +79,36 @@ const stopCamera = () => {
 // 捕获图像
 const captureImage = () => {
   if (!video.value || !stream.value) return null; // 检查 stream.value
+
+  const videoEl = video.value;
+  const targetAspectRatio = 85.6 / 54; // 目标宽高比（身份证）
+  const videoWidth = videoEl.videoWidth;
+  const videoHeight = videoEl.videoHeight;
+  const videoAspectRatio = videoWidth / videoHeight;
+
+  let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
+
+  // 计算需要从源视频中裁剪的区域
+  if (videoAspectRatio > targetAspectRatio) {
+    // 视频比目标更宽，需要裁剪左右两边
+    sWidth = videoHeight * targetAspectRatio;
+    sx = (videoWidth - sWidth) / 2;
+  } else if (videoAspectRatio < targetAspectRatio) {
+    // 视频比目标更高，需要裁剪上下两边
+    sHeight = videoWidth / targetAspectRatio;
+    sy = (videoHeight - sHeight) / 2;
+  }
+  // 如果比例相同，则无需裁剪，使用原始 sx, sy, sWidth, sHeight
+
   const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = video.value.videoWidth;
-  tempCanvas.height = video.value.videoHeight;
+  // 设置画布尺寸为裁剪后的尺寸
+  tempCanvas.width = sWidth;
+  tempCanvas.height = sHeight;
+
   const context = tempCanvas.getContext('2d');
-  context.drawImage(video.value, 0, 0, tempCanvas.width, tempCanvas.height);
+  // 从视频源的计算区域绘制到画布上
+  context.drawImage(videoEl, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
+
   return tempCanvas.toDataURL('image/png');
 };
 
@@ -225,8 +250,10 @@ h2, h3 {
   max-width: 100%; /* 视频响应式 */
   height: auto;
   width: 100%; /* 尝试让视频宽度占满容器 */
-  aspect-ratio: 4 / 3; /* 保持常见摄像头比例 */
-  object-fit: cover; /* 覆盖容器，可能裁剪 */
+  /* aspect-ratio: 4 / 3; */ /* 保持常见摄像头比例 */
+  aspect-ratio: 85.6 / 54; /* 修改为接近身份证的宽高比 */
+  /* object-fit: cover; */ /* 覆盖容器，可能裁剪 */
+  object-fit: cover; /* 包含完整内容，可能有黑边 */
 }
 
 .capture-buttons {
@@ -342,6 +369,8 @@ button:disabled {
 
   .video-feed {
      margin-bottom: 10px;
+     /* aspect-ratio 继承自上面的设置，无需重复 */
+     /* object-fit 继承自上面的设置，无需重复 */
   }
 
   .capture-buttons {
