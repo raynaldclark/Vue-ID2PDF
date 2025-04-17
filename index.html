@@ -4,10 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + Vue</title>
+    <!-- 添加 OpenCV.js -->
+    <script async src="https://docs.opencv.org/4.5.5/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+    <title>身份证扫描与PDF生成</title>
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      // OpenCV.js 加载完成后触发事件
+      function onOpenCvReady() {
+        console.log('OpenCV.js 已加载完成');
+        window.cvReady = true;
+        window.dispatchEvent(new CustomEvent('opencv-ready'));
+      }
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
