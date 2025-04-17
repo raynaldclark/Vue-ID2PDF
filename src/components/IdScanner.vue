@@ -80,18 +80,21 @@
     </button>
 
     <!-- 裁剪器模态框 -->
-    <div v-if="showCropper" class="cropper-modal">
-      <div class="cropper-content">
-        <h3>图片裁剪</h3>
-        <div class="cropper-image-container">
-          <img ref="imageToCrop" :src="currentImageDataUrl" alt="待裁剪图片" style="max-width: 100%;">
-        </div>
-        <div class="cropper-actions">
-          <button @click="confirmCrop" class="confirm-crop-button">确认裁剪</button>
-          <button @click="closeCropper" class="cancel-crop-button">取消</button>
+    <transition name="modal-fade">
+      <div v-if="showCropper" class="cropper-modal">
+        <div class="cropper-content">
+          <h3>{{ currentCroppingSide === 'front' ? '裁剪身份证正面' : '裁剪身份证反面' }}</h3>
+          <p class="cropper-tip">请调整图片位置和大小，确保身份证完整显示</p>
+          <div class="cropper-image-container">
+            <img ref="imageToCrop" :src="currentImageDataUrl" alt="待裁剪图片" style="max-width: 100%;">
+          </div>
+          <div class="cropper-actions">
+            <button @click="confirmCrop" class="confirm-crop-button">确认裁剪</button>
+            <button @click="closeCropper" class="cancel-crop-button">取消</button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -516,33 +519,38 @@ const captureDetectedCard = (rect) => {
   };
 
   // 打开裁剪器
-  const openCropper = (side, imageDataUrl) => {
-    currentCroppingSide.value = side;
-    currentImageDataUrl.value = imageDataUrl;
-    showCropper.value = true;
+const openCropper = (side, imageDataUrl) => {
+  currentCroppingSide.value = side;
+  currentImageDataUrl.value = imageDataUrl;
+  showCropper.value = true;
 
-    nextTick(() => {
-      if (imageToCrop.value) {
-        // 如果已存在裁剪实例，先销毁
-        if (cropperInstance.value) {
-          cropperInstance.value.destroy();
-        }
-        
-        // 创建新的裁剪实例
-        cropperInstance.value = new Cropper(imageToCrop.value, {
-          aspectRatio: ID_ASPECT_RATIO, // 设置裁剪框比例
-          viewMode: 1, // 限制裁剪框不超出图片范围
-          dragMode: 'move', // 拖动模式为移动图片
-          background: false, // 不显示背景网格
-          autoCropArea: 0.9, // 初始裁剪区域占图片90%
-          zoomable: true, // 允许缩放图片
-          movable: true, // 允许移动图片
-          rotatable: false, // 禁止旋转
-          scalable: false, // 禁止缩放图片本身
-        });
+  // 如果摄像头开着，暂停视频流
+  if (video.value && isCameraOpen.value) {
+    video.value.pause(); // 暂停视频播放
+  }
+
+  nextTick(() => {
+    if (imageToCrop.value) {
+      // 如果已存在裁剪实例，先销毁
+      if (cropperInstance.value) {
+        cropperInstance.value.destroy();
       }
-    });
-  };
+      
+      // 创建新的裁剪实例
+      cropperInstance.value = new Cropper(imageToCrop.value, {
+        aspectRatio: ID_ASPECT_RATIO, // 设置裁剪框比例
+        viewMode: 1, // 限制裁剪框不超出图片范围
+        dragMode: 'move', // 拖动模式为移动图片
+        background: false, // 不显示背景网格
+        autoCropArea: 0.9, // 初始裁剪区域占图片90%
+        zoomable: true, // 允许缩放图片
+        movable: true, // 允许移动图片
+        rotatable: false, // 禁止旋转
+        scalable: false, // 禁止缩放图片本身
+      });
+    }
+  });
+};
 
   // 确认裁剪
   const confirmCrop = () => {
@@ -581,15 +589,20 @@ const captureDetectedCard = (rect) => {
   };
 
   // 关闭裁剪器
-  const closeCropper = () => {
-    if (cropperInstance.value) {
-      cropperInstance.value.destroy();
-      cropperInstance.value = null;
-    }
-    showCropper.value = false;
-    currentCroppingSide.value = null;
-    currentImageDataUrl.value = null;
-  };
+const closeCropper = () => {
+  if (cropperInstance.value) {
+    cropperInstance.value.destroy();
+    cropperInstance.value = null;
+  }
+  showCropper.value = false;
+  currentCroppingSide.value = null;
+  currentImageDataUrl.value = null;
+  
+  // 如果摄像头开着，恢复视频流
+  if (video.value && isCameraOpen.value) {
+    video.value.play(); // 恢复视频播放
+  }
+};
 
   // 绘制图像到 Canvas
   const drawImagesOnCanvas = () => {
@@ -853,11 +866,12 @@ h2, h3 {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7); /* 半透明背景 */
+  background-color: rgba(0, 0, 0, 0.9); /* 增加不透明度从0.7到0.9 */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000; /* 确保在最上层 */
+  backdrop-filter: blur(5px); /* 添加模糊效果增强分离感 */
 }
 
 .cropper-content {
@@ -938,6 +952,20 @@ button:disabled {
 
 .generate-button:hover:not(:disabled) {
   background-color: #218838; /* 悬停时深绿色 */
+}
+
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.3s;
+}
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+}
+
+.cropper-tip {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 15px;
+  text-align: center;
 }
 
 /* 移动端适配媒体查询 */
