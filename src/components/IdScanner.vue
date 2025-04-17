@@ -3,9 +3,27 @@
     <h2>身份证扫描与PDF生成</h2>
 
     <div class="camera-section">
-      <!-- 摄像头视频流 -->
-      <video ref="video" width="85.6" height="54" autoplay playsinline class="video-feed"></video>
-      <div class="capture-buttons">
+      <!-- 新增：控制摄像头的按钮 -->
+      <button @click="toggleCamera" :disabled="isProcessingCamera" class="toggle-camera-button">
+        {{ isCameraOpen ? '关闭摄像头' : '打开摄像头' }}
+      </button>
+
+      <!-- 摄像头视频流 - 使用 v-show 保持DOM结构，避免重新渲染 -->
+      <div v-show="isCameraOpen" class="video-wrapper"> <!-- 添加一个包装器以便控制显示 -->
+        <video ref="video" autoplay playsinline class="video-feed"></video>
+      </div>
+      <!-- 可选：摄像头关闭时的占位符 -->
+      <div v-if="!isCameraOpen && !isProcessingCamera" class="video-placeholder">
+        请点击“打开摄像头”开始扫描
+      </div>
+       <!-- 可选：正在打开摄像头时的提示 -->
+      <div v-if="isProcessingCamera && !isCameraOpen" class="video-placeholder">
+        正在打开摄像头...
+      </div>
+
+
+      <!-- 拍摄按钮 - 仅在摄像头打开时启用 -->
+      <div class="capture-buttons" v-if="isCameraOpen">
         <button @click="captureFront" :disabled="!stream">拍摄正面</button>
         <button @click="captureBack" :disabled="!stream">拍摄反面</button>
       </div>
@@ -42,31 +60,41 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'; // 导入 computed
 
 const video = ref(null);
 const canvas = ref(null);
 const frontImage = ref(null);
 const backImage = ref(null);
 let stream = ref(null); // 使用 ref 以便在模板中检查
+const isCameraOpen = computed(() => !!stream.value); // 计算属性判断摄像头状态
+const isProcessingCamera = ref(false); // 防止重复点击
 
 // 初始化摄像头
 const initCamera = async () => {
+  if (isProcessingCamera.value) return; // 防止重复执行
+  isProcessingCamera.value = true;
   try {
     const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
     stream.value = mediaStream; // 更新 ref 的值
     if (video.value) {
       video.value.srcObject = mediaStream;
+      // 确保视频开始播放 (某些浏览器可能需要)
+      await video.value.play(); 
     }
   } catch (err) {
     console.error("无法访问摄像头: ", err);
     alert("无法访问摄像头，请检查权限或设备。");
     stream.value = null; // 发生错误时重置
+  } finally {
+    isProcessingCamera.value = false; // 完成处理
   }
 };
 
 // 停止摄像头
 const stopCamera = () => {
+  if (isProcessingCamera.value && !stream.value) return; // 如果正在打开，则不执行关闭
+  isProcessingCamera.value = true; // 标记开始处理
   if (stream.value) {
     stream.value.getTracks().forEach(track => track.stop());
   }
@@ -74,7 +102,21 @@ const stopCamera = () => {
     video.value.srcObject = null;
   }
   stream.value = null; // 重置 ref
+  // 清空预览，可选
+  // frontImage.value = null;
+  // backImage.value = null;
+  isProcessingCamera.value = false; // 标记处理结束
 };
+
+// 新增：切换摄像头状态的函数
+const toggleCamera = async () => {
+  if (isCameraOpen.value) {
+    stopCamera();
+  } else {
+    await initCamera();
+  }
+};
+
 
 // 捕获图像
 const captureImage = () => {
@@ -111,6 +153,7 @@ const captureImage = () => {
 
   return tempCanvas.toDataURL('image/png');
 };
+
 
 const captureFront = () => {
   frontImage.value = captureImage();
@@ -195,12 +238,13 @@ const generatePdf = async () => {
   pdf.save('身份证件.pdf');
 };
 
-// 组件挂载时初始化摄像头
-onMounted(() => {
-  initCamera();
-});
 
-// 组件卸载前停止摄像头
+// 组件挂载时不再初始化摄像头
+// onMounted(() => {
+//   initCamera();
+// });
+
+// 组件卸载前仍然需要停止摄像头，以防万一
 onBeforeUnmount(() => {
   stopCamera();
 });
@@ -243,24 +287,62 @@ h2, h3 {
   align-items: center;
 }
 
-.video-feed {
-  border: 1px solid #ccc;
-  margin-bottom: 15px;
-  display: block;
-  max-width: 100%; /* 视频响应式 */
-  height: auto;
-  width: 100%; /* 尝试让视频宽度占满容器 */
-  /* aspect-ratio: 4 / 3; */ /* 保持常见摄像头比例 */
-  aspect-ratio: 85.6 / 54; /* 修改为接近身份证的宽高比 */
-  /* object-fit: cover; */ /* 覆盖容器，可能裁剪 */
-  object-fit: cover; /* 包含完整内容，可能有黑边 */
+/* 新增：切换摄像头按钮样式 */
+.toggle-camera-button {
+  margin-bottom: 15px; /* 与下方元素保持间距 */
+  /* 可以继承通用按钮样式或自定义 */
 }
+
+/* 新增：视频包装器 */
+.video-wrapper {
+  width: 100%; /* 继承或设置宽度 */
+  max-width: 600px; /* 限制最大宽度，根据需要调整 */
+  aspect-ratio: 85.6 / 54; /* 保持身份证比例 */
+  margin-bottom: 15px; /* 与下方按钮间距 */
+  position: relative; /* 如果需要叠加元素 */
+  background-color: #eee; /* 可以给个背景色 */
+  display: flex; /* 用于内部 video 居中等 */
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* 隐藏超出部分 */
+}
+
+
+.video-feed {
+  /* border: 1px solid #ccc; */ /* 边框移到 wrapper */
+  /* margin-bottom: 15px; */ /* 移到 wrapper */
+  display: block;
+  /* max-width: 100%; */ /* 由 wrapper 控制 */
+  height: 100%; /* 填充 wrapper 高度 */
+  width: 100%; /* 填充 wrapper 宽度 */
+  /* aspect-ratio: 85.6 / 54; */ /* 比例由 wrapper 控制 */
+  object-fit: cover;
+}
+
+/* 新增：视频占位符样式 */
+.video-placeholder {
+  width: 100%;
+  max-width: 600px; /* 与 video-wrapper 保持一致 */
+  aspect-ratio: 85.6 / 54; /* 保持身份证比例 */
+  background-color: #f0f0f0;
+  color: #888;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border: 1px dashed #ccc;
+  margin-bottom: 15px; /* 与下方按钮间距 */
+  padding: 10px;
+  box-sizing: border-box;
+}
+
 
 .capture-buttons {
   display: flex; /* 让按钮并排 */
   justify-content: center; /* 居中按钮 */
   flex-wrap: wrap; /* 空间不足时换行 */
   gap: 10px; /* 按钮间距 */
+  /* margin-top: 15px; */ /* 如果视频隐藏，这个间距可能不需要了 */
 }
 
 .capture-buttons button {
@@ -367,21 +449,14 @@ button:disabled {
     margin-bottom: 15px; /* 减小间距 */
   }
 
-  .video-feed {
+  .video-wrapper, .video-placeholder {
+     max-width: 95%; /* 移动端可以更宽 */
      margin-bottom: 10px;
-     /* aspect-ratio 继承自上面的设置，无需重复 */
-     /* object-fit 继承自上面的设置，无需重复 */
   }
 
-  .capture-buttons {
-    flex-direction: column; /* 垂直堆叠按钮 */
-    width: 100%; /* 占满宽度 */
-    gap: 8px;
-  }
-
-  .capture-buttons button {
-    width: 80%; /* 设置按钮宽度 */
-    margin: 0 auto; /* 居中 */
+  .toggle-camera-button {
+    width: 80%;
+    margin: 0 auto 10px auto; /* 居中并添加底部间距 */
   }
 
   .image-previews {
