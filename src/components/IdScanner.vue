@@ -4,14 +4,10 @@
 
     <section class="camera-section" aria-labelledby="camera-section-title">
       <h2 id="camera-section-title" class="section-title">摄像头控制</h2>
-      
+
       <!-- 控制摄像头的按钮 -->
-      <button 
-        @click="toggleCamera" 
-        :disabled="isProcessingCamera" 
-        class="toggle-camera-button"
-        :aria-label="isCameraOpen ? '关闭摄像头' : '打开摄像头'"
-      >
+      <button @click="toggleCamera" :disabled="isProcessingCamera" class="toggle-camera-button"
+        :aria-label="isCameraOpen ? '关闭摄像头' : '打开摄像头'">
         {{ isCameraOpen ? '关闭摄像头' : '打开摄像头' }}
       </button>
 
@@ -25,12 +21,12 @@
           {{ detectionStatus }}
         </div>
       </div>
-      
+
       <!-- 摄像头关闭时的占位符 -->
       <div v-if="!isCameraOpen && !isProcessingCamera" class="video-placeholder" aria-live="polite">
         请点击"打开摄像头"开始扫描
       </div>
-      
+
       <!-- 正在打开摄像头时的提示 -->
       <div v-if="isProcessingCamera && !isCameraOpen" class="video-placeholder" aria-live="polite">
         正在打开摄像头...
@@ -38,25 +34,14 @@
 
       <!-- 拍摄按钮 - 仅在摄像头打开时启用 -->
       <div class="capture-buttons" v-if="isCameraOpen">
-        <button 
-          @click="toggleAutoDetect" 
-          :class="{'active': autoDetectEnabled}"
-          :aria-pressed="autoDetectEnabled ? 'true' : 'false'"
-        >
+        <button @click="toggleAutoDetect" :class="{ 'active': autoDetectEnabled }"
+          :aria-pressed="autoDetectEnabled ? 'true' : 'false'">
           {{ autoDetectEnabled ? '关闭自动检测' : '开启自动检测' }}
         </button>
-        <button 
-          @click="captureFront" 
-          :disabled="!stream"
-          aria-label="手动拍摄身份证正面"
-        >
+        <button @click="captureFront" :disabled="!stream" aria-label="手动拍摄身份证正面">
           手动拍摄正面
         </button>
-        <button 
-          @click="captureBack" 
-          :disabled="!stream"
-          aria-label="手动拍摄身份证反面"
-        >
+        <button @click="captureBack" :disabled="!stream" aria-label="手动拍摄身份证反面">
           手动拍摄反面
         </button>
       </div>
@@ -71,12 +56,8 @@
             <div v-else class="placeholder">正面预览</div>
           </div>
           <!-- 重新裁剪按钮 -->
-          <button 
-            v-if="frontImage" 
-            @click="openCropper('front', frontImage)" 
-            class="recrop-button"
-            aria-label="编辑身份证正面图像"
-          >
+          <button v-if="frontImage" @click="openCropper('front', frontImage)" class="recrop-button"
+            aria-label="编辑身份证正面图像">
             编辑正面
           </button>
         </div>
@@ -86,12 +67,7 @@
             <div v-else class="placeholder">反面预览</div>
           </div>
           <!-- 重新裁剪按钮 -->
-          <button 
-            v-if="backImage" 
-            @click="openCropper('back', backImage)" 
-            class="recrop-button"
-            aria-label="编辑身份证反面图像"
-          >
+          <button v-if="backImage" @click="openCropper('back', backImage)" class="recrop-button" aria-label="编辑身份证反面图像">
             编辑反面
           </button>
         </div>
@@ -104,24 +80,14 @@
       <canvas ref="canvas" class="a4-canvas" aria-label="A4文档预览"></canvas>
     </section>
 
-    <button 
-      @click="generatePdf" 
-      :disabled="!frontImage || !backImage" 
-      class="generate-button"
-      aria-label="生成并下载PDF文档"
-    >
+    <button @click="generatePdf" :disabled="!frontImage || !backImage" class="generate-button" aria-label="生成并下载PDF文档">
       生成并下载PDF
     </button>
 
     <!-- 裁剪器模态框 -->
     <transition name="modal-fade">
-      <div 
-        v-if="showCropper" 
-        class="cropper-modal" 
-        role="dialog" 
-        aria-modal="true" 
-        :aria-label="currentCroppingSide === 'front' ? '裁剪身份证正面' : '裁剪身份证反面'"
-      >
+      <div v-if="showCropper" class="custom-cropper-modal" role="dialog" aria-modal="true"
+        :aria-label="currentCroppingSide === 'front' ? '裁剪身份证正面' : '裁剪身份证反面'" @click.self="closeCropper">
         <div class="cropper-content">
           <h2 class="section-title">{{ currentCroppingSide === 'front' ? '裁剪身份证正面' : '裁剪身份证反面' }}</h2>
           <p class="cropper-tip">请调整图片位置和大小，确保身份证完整显示</p>
@@ -186,7 +152,7 @@ const cvReady = ref(false);
 onMounted(() => {
   // 添加调整窗口大小时重新绘制A4预览的功能
   window.addEventListener('resize', handleWindowResize);
-  
+
   // OpenCV 加载检测
   if (window.cvReady) {
     cvReady.value = true;
@@ -196,7 +162,7 @@ onMounted(() => {
       cvReady.value = true;
       console.log('OpenCV.js 已加载');
     });
-    
+
     // 如果60秒后仍未加载完成，显示提示
     setTimeout(() => {
       if (!cvReady.value) {
@@ -229,7 +195,7 @@ const initCamera = async () => {
   if (isProcessingCamera.value) return;
   isProcessingCamera.value = true;
   detectionStatus.value = '正在打开摄像头...';
-  
+
   try {
     const constraints = {
       video: {
@@ -239,23 +205,23 @@ const initCamera = async () => {
       },
       audio: false
     };
-    
+
     // 尝试获取媒体流
     const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
     stream.value = mediaStream;
-    
+
     if (video.value) {
       video.value.srcObject = mediaStream;
-      
+
       try {
         await video.value.play();
-        
+
         // 初始化覆盖层 Canvas
         if (overlayCanvas.value) {
           overlayCanvas.value.width = video.value.videoWidth;
           overlayCanvas.value.height = video.value.videoHeight;
         }
-        
+
         detectionStatus.value = '摄像头已准备就绪';
       } catch (playError) {
         console.error("视频播放失败: ", playError);
@@ -265,7 +231,7 @@ const initCamera = async () => {
   } catch (err) {
     console.error("无法访问摄像头: ", err);
     let errorMessage = "无法访问摄像头";
-    
+
     // 提供更具体的错误信息
     if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
       errorMessage = "摄像头访问被拒绝，请检查权限设置";
@@ -277,7 +243,7 @@ const initCamera = async () => {
       errorMessage = "摄像头不支持请求的分辨率，正在尝试替代设置";
       // 可以在这里实现分辨率降级策略
     }
-    
+
     alert(errorMessage);
     stream.value = null;
   } finally {
@@ -292,19 +258,19 @@ const initCamera = async () => {
 const stopCamera = () => {
   if (isProcessingCamera.value && !stream.value) return;
   isProcessingCamera.value = true;
-  
+
   // 停止自动检测
   if (autoDetectEnabled.value) {
     stopAutoDetect();
   }
-  
+
   if (stream.value) {
     stream.value.getTracks().forEach(track => track.stop());
   }
   if (video.value) {
     video.value.srcObject = null;
   }
-  
+
   stream.value = null;
   isProcessingCamera.value = false;
   detectionStatus.value = '';
@@ -326,7 +292,7 @@ const toggleAutoDetect = () => {
     alert('OpenCV.js 尚未加载完成，请稍后再试');
     return;
   }
-  
+
   if (autoDetectEnabled.value) {
     stopAutoDetect();
   } else {
@@ -337,16 +303,16 @@ const toggleAutoDetect = () => {
 // 开始自动检测
 const startAutoDetect = () => {
   if (!isCameraOpen.value || !cvReady.value) return;
-  
+
   autoDetectEnabled.value = true;
   detectionStatus.value = '正在检测身份证...';
-  
+
   // 重置检测状态
   frontDetected.value = false;
   backDetected.value = false;
   stableDetectionCount.value = 0;
   lastDetectionResult.value = null;
-  
+
   // 设置检测间隔
   detectionInterval.value = setInterval(() => {
     if (!detectionInProgress.value) {
@@ -359,12 +325,12 @@ const startAutoDetect = () => {
 const stopAutoDetect = () => {
   autoDetectEnabled.value = false;
   detectionStatus.value = '';
-  
+
   if (detectionInterval.value) {
     clearInterval(detectionInterval.value);
     detectionInterval.value = null;
   }
-  
+
   // 清除覆盖层
   if (overlayCanvas.value) {
     const ctx = overlayCanvas.value.getContext('2d');
@@ -376,54 +342,54 @@ const stopAutoDetect = () => {
 // 检测身份证
 const detectIdCard = async () => {
   if (!video.value || !stream.value || !cvReady.value || detectionInProgress.value) return;
-  
+
   detectionInProgress.value = true;
-  
+
   try {
     // 从视频中捕获一帧
     const videoEl = video.value;
     const videoWidth = videoEl.videoWidth;
     const videoHeight = videoEl.videoHeight;
-    
+
     // 创建临时 Canvas 用于捕获视频帧
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = videoWidth;
     tempCanvas.height = videoHeight;
     const tempCtx = tempCanvas.getContext('2d');
     tempCtx.drawImage(videoEl, 0, 0, videoWidth, videoHeight);
-    
+
     // 获取图像数据
     const imageData = tempCtx.getImageData(0, 0, videoWidth, videoHeight);
-    
+
     // 使用 OpenCV 处理图像
     const src = cv.matFromImageData(imageData);
     const dst = new cv.Mat();
-    
+
     // 转换为灰度图
     cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-    
+
     // 应用高斯模糊减少噪声
     const ksize = new cv.Size(5, 5);
     cv.GaussianBlur(dst, dst, ksize, 0);
-    
+
     // 应用 Canny 边缘检测
     const edges = new cv.Mat();
     cv.Canny(dst, edges, 50, 150);
-    
+
     // 查找轮廓
     const contours = new cv.MatVector();
     const hierarchy = new cv.Mat();
     cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-    
+
     // 查找最大的矩形轮廓
     let maxArea = 0;
     let maxContourIndex = -1;
     let maxRect = null;
-    
+
     for (let i = 0; i < contours.size(); ++i) {
       const contour = contours.get(i);
       const area = cv.contourArea(contour);
-      
+
       // 只考虑面积足够大的轮廓
       if (area > AUTO_CAPTURE_AREA_THRESHOLD) {
         // 计算轮廓的周长
@@ -431,13 +397,13 @@ const detectIdCard = async () => {
         // 多边形近似
         const approx = new cv.Mat();
         cv.approxPolyDP(contour, approx, 0.02 * perimeter, true);
-        
+
         // 如果近似后的多边形有4个顶点，可能是矩形
         if (approx.rows === 4) {
           // 计算宽高比，判断是否接近身份证比例
           const rect = cv.boundingRect(approx);
           const aspectRatio = rect.width / rect.height;
-          
+
           // 允许一定的误差范围
           if (Math.abs(aspectRatio - ID_ASPECT_RATIO) < ID_ASPECT_RATIO_TOLERANCE && area > maxArea) {
             maxArea = area;
@@ -445,21 +411,21 @@ const detectIdCard = async () => {
             maxRect = rect;
           }
         }
-        
+
         approx.delete();
       }
     }
-    
+
     // 在覆盖层上绘制检测结果
     const overlayCtx = overlayCanvas.value.getContext('2d');
     overlayCtx.clearRect(0, 0, overlayCanvas.value.width, overlayCanvas.value.height);
-    
+
     if (maxContourIndex !== -1) {
       // 绘制检测到的矩形
       overlayCtx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
       overlayCtx.lineWidth = 3;
       overlayCtx.strokeRect(maxRect.x, maxRect.y, maxRect.width, maxRect.height);
-      
+
       // 计算当前检测结果的特征
       const result = {
         x: maxRect.x,
@@ -468,21 +434,21 @@ const detectIdCard = async () => {
         height: maxRect.height,
         area: maxArea
       };
-      
+
       // 检查是否与上次检测结果相似
       if (lastDetectionResult.value) {
         const xDiff = Math.abs(result.x - lastDetectionResult.value.x);
         const yDiff = Math.abs(result.y - lastDetectionResult.value.y);
         const widthDiff = Math.abs(result.width - lastDetectionResult.value.width);
         const heightDiff = Math.abs(result.height - lastDetectionResult.value.height);
-        
+
         // 如果位置和大小变化不大，认为是稳定的检测
         if (xDiff < 10 && yDiff < 10 && widthDiff < 10 && heightDiff < 10) {
           stableDetectionCount.value++;
-          
+
           // 显示稳定度
           detectionStatus.value = `检测到身份证 (稳定度: ${stableDetectionCount.value}/${REQUIRED_STABLE_DETECTIONS})`;
-          
+
           // 如果连续多次检测结果稳定，自动捕获
           if (stableDetectionCount.value >= REQUIRED_STABLE_DETECTIONS) {
             // 根据当前已捕获的状态决定捕获正面还是反面
@@ -502,12 +468,12 @@ const detectIdCard = async () => {
                 backImage.value = capturedImage;
                 backDetected.value = true;
                 detectionStatus.value = '反面已捕获，扫描完成！';
-                
+
                 // 绘制到 A4 预览
                 if (frontImage.value && backImage.value) {
                   drawImagesOnCanvas();
                 }
-                
+
                 // 停止自动检测
                 stopAutoDetect();
               }
@@ -522,7 +488,7 @@ const detectIdCard = async () => {
         stableDetectionCount.value = 1;
         detectionStatus.value = '检测到身份证 (请保持稳定)';
       }
-      
+
       // 更新上次检测结果
       lastDetectionResult.value = result;
     } else {
@@ -531,14 +497,14 @@ const detectIdCard = async () => {
       lastDetectionResult.value = null;
       detectionStatus.value = '未检测到身份证，请调整位置...';
     }
-    
+
     // 释放 OpenCV 资源
     src.delete();
     dst.delete();
     edges.delete();
     contours.delete();
     hierarchy.delete();
-    
+
   } catch (error) {
     console.error('身份证检测错误:', error);
     detectionStatus.value = '检测出错，请重试';
@@ -550,15 +516,15 @@ const detectIdCard = async () => {
 // 捕获检测到的身份证
 const captureDetectedCard = (rect) => {
   if (!video.value) return null;
-  
+
   try {
     // 创建临时 Canvas
     const tempCanvas = document.createElement('canvas');
-    
+
     // 设置 Canvas 大小为检测到的矩形大小
     tempCanvas.width = rect.width;
     tempCanvas.height = rect.height;
-    
+
     // 从视频中裁剪出检测到的矩形区域
     const ctx = tempCanvas.getContext('2d');
     ctx.drawImage(
@@ -566,7 +532,7 @@ const captureDetectedCard = (rect) => {
       rect.x, rect.y, rect.width, rect.height,  // 源矩形
       0, 0, rect.width, rect.height             // 目标矩形
     );
-    
+
     // 转换为 Data URL
     return tempCanvas.toDataURL('image/png');
   } catch (error) {
@@ -645,7 +611,7 @@ const openCropper = (side, imageDataUrl) => {
       if (cropperInstance.value) {
         cropperInstance.value.destroy();
       }
-      
+
       // 创建新的裁剪实例
       cropperInstance.value = new Cropper(imageToCrop.value, {
         aspectRatio: ID_ASPECT_RATIO, // 设置裁剪框比例
@@ -672,7 +638,7 @@ const confirmCrop = () => {
       maxHeight: 4096,
       fillColor: '#fff'
     });
-    
+
     if (!croppedCanvas) return;
 
     const croppedImageDataUrl = croppedCanvas.toDataURL('image/png');
@@ -689,7 +655,7 @@ const confirmCrop = () => {
     if (frontImage.value && backImage.value) {
       drawImagesOnCanvas();
     }
-    
+
     closeCropper();
   } catch (error) {
     console.error('裁剪失败:', error);
@@ -707,10 +673,12 @@ const closeCropper = () => {
   showCropper.value = false;
   currentCroppingSide.value = null;
   currentImageDataUrl.value = null;
-  
+
   // 如果摄像头开着，恢复视频流
   if (video.value && isCameraOpen.value) {
-    video.value.play(); // 恢复视频播放
+    setTimeout(() => {
+      video.value.play(); // 延迟一点恢复视频播放，避免闪烁
+    }, 100);
   }
 };
 
@@ -763,7 +731,7 @@ const drawImagesOnCanvas = () => {
     // 绘制反面图片
     drawScaledImage(imgBack, a4Height * 0.5); // 从中间开始，留些间距
   };
-  
+
   // 先加载正面图片
   if (frontImage.value) {
     imgFront.src = frontImage.value;
@@ -800,11 +768,11 @@ const generatePdf = async () => {
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
     pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-    
+
     // 创建文件名 - 当前时间戳
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `身份证件_${timestamp}.pdf`;
-    
+
     pdf.save(filename);
   } catch (e) {
     console.error("Error generating PDF:", e);
@@ -820,11 +788,16 @@ const generatePdf = async () => {
   align-items: center;
   padding: 1.25rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  max-width: 800px; /* 桌面端最大宽度 */
-  width: 100%; /* 默认宽度为100% */
-  min-height: 100vh; /* 确保容器至少占满屏幕高度 */
-  box-sizing: border-box; /* 让 padding 包含在 width 内 */
-  margin: 0 auto; /* 居中 */
+  max-width: 800px;
+  /* 桌面端最大宽度 */
+  width: 100%;
+  /* 默认宽度为100% */
+  min-height: 100vh;
+  /* 确保容器至少占满屏幕高度 */
+  box-sizing: border-box;
+  /* 让 padding 包含在 width 内 */
+  margin: 0 auto;
+  /* 居中 */
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -832,7 +805,8 @@ const generatePdf = async () => {
   line-height: 1.5;
 }
 
-h1, .section-title {
+h1,
+.section-title {
   color: #1a73e8;
   margin-bottom: 1rem;
   text-align: center;
@@ -865,17 +839,22 @@ h1 {
   border-radius: 1px;
 }
 
-.camera-section, .preview-section, .canvas-section {
+.camera-section,
+.preview-section,
+.canvas-section {
   width: 100%;
   margin-bottom: 1.5rem;
   padding: 1.25rem;
-  background-color: #fff; /* 为每个部分添加白色背景 */
+  background-color: #fff;
+  /* 为每个部分添加白色背景 */
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   transition: box-shadow 0.3s ease;
 }
 
-.camera-section:hover, .preview-section:hover, .canvas-section:hover {
+.camera-section:hover,
+.preview-section:hover,
+.canvas-section:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.09);
 }
 
@@ -887,22 +866,31 @@ h1 {
 
 /* 切换摄像头按钮样式 */
 .toggle-camera-button {
-  margin-bottom: 1rem; /* 与下方元素保持间距 */
+  margin-bottom: 1rem;
+  /* 与下方元素保持间距 */
   min-width: 160px;
 }
 
 /* 视频包装器 */
 .video-wrapper {
-  width: 100%; /* 继承或设置宽度 */
-  max-width: 600px; /* 限制最大宽度，根据需要调整 */
-  aspect-ratio: 85.6 / 54; /* 保持身份证比例 */
-  margin-bottom: 1rem; /* 与下方按钮间距 */
-  position: relative; /* 用于定位覆盖层 */
-  background-color: #f0f0f0; /* 可以给个背景色 */
-  display: flex; /* 用于内部 video 居中等 */
+  width: 100%;
+  /* 继承或设置宽度 */
+  max-width: 600px;
+  /* 限制最大宽度，根据需要调整 */
+  aspect-ratio: 85.6 / 54;
+  /* 保持身份证比例 */
+  margin-bottom: 1rem;
+  /* 与下方按钮间距 */
+  position: relative;
+  /* 用于定位覆盖层 */
+  background-color: #f0f0f0;
+  /* 可以给个背景色 */
+  display: flex;
+  /* 用于内部 video 居中等 */
   justify-content: center;
   align-items: center;
-  overflow: hidden; /* 隐藏超出部分 */
+  overflow: hidden;
+  /* 隐藏超出部分 */
   border-radius: 6px;
   border: 1px solid #e0e0e0;
 }
@@ -914,7 +902,8 @@ h1 {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* 允许点击穿透到下面的视频 */
+  pointer-events: none;
+  /* 允许点击穿透到下面的视频 */
   z-index: 10;
 }
 
@@ -937,16 +926,20 @@ h1 {
 
 .video-feed {
   display: block;
-  height: 100%; /* 填充 wrapper 高度 */
-  width: 100%; /* 填充 wrapper 宽度 */
+  height: 100%;
+  /* 填充 wrapper 高度 */
+  width: 100%;
+  /* 填充 wrapper 宽度 */
   object-fit: cover;
 }
 
 /* 视频占位符样式 */
 .video-placeholder {
   width: 100%;
-  max-width: 600px; /* 与 video-wrapper 保持一致 */
-  aspect-ratio: 85.6 / 54; /* 保持身份证比例 */
+  max-width: 600px;
+  /* 与 video-wrapper 保持一致 */
+  aspect-ratio: 85.6 / 54;
+  /* 保持身份证比例 */
   background-color: #f5f5f5;
   color: #757575;
   display: flex;
@@ -954,7 +947,8 @@ h1 {
   align-items: center;
   text-align: center;
   border: 1px dashed #ccc;
-  margin-bottom: 1rem; /* 与下方按钮间距 */
+  margin-bottom: 1rem;
+  /* 与下方按钮间距 */
   padding: 1rem;
   box-sizing: border-box;
   border-radius: 6px;
@@ -962,31 +956,42 @@ h1 {
 }
 
 .capture-buttons {
-  display: flex; /* 让按钮并排 */
-  justify-content: center; /* 居中按钮 */
-  flex-wrap: wrap; /* 空间不足时换行 */
-  gap: 0.625rem; /* 按钮间距 */
+  display: flex;
+  /* 让按钮并排 */
+  justify-content: center;
+  /* 居中按钮 */
+  flex-wrap: wrap;
+  /* 空间不足时换行 */
+  gap: 0.625rem;
+  /* 按钮间距 */
   width: 100%;
   max-width: 600px;
 }
 
 .capture-buttons button {
-  margin: 0; /* 移除外边距，使用gap控制 */
-  flex: 1; /* 按钮平分空间 */
-  min-width: 120px; /* 确保按钮不会太窄 */
+  margin: 0;
+  /* 移除外边距，使用gap控制 */
+  flex: 1;
+  /* 按钮平分空间 */
+  min-width: 120px;
+  /* 确保按钮不会太窄 */
 }
 
 .capture-buttons button.active {
-  background-color: #28a745; /* 激活状态为绿色 */
+  background-color: #28a745;
+  /* 激活状态为绿色 */
   box-shadow: 0 2px 4px rgba(40, 167, 69, 0.25);
 }
 
 .image-previews {
   display: flex;
   justify-content: space-around;
-  gap: 1rem; /* 调整间距 */
-  flex-wrap: wrap; /* 允许换行 */
-  align-items: flex-start; /* 顶部对齐 */
+  gap: 1rem;
+  /* 调整间距 */
+  flex-wrap: wrap;
+  /* 允许换行 */
+  align-items: flex-start;
+  /* 顶部对齐 */
 }
 
 /* 包裹预览和编辑按钮 */
@@ -994,7 +999,8 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem; /* 预览框和按钮的间距 */
+  gap: 0.5rem;
+  /* 预览框和按钮的间距 */
   flex: 1;
   max-width: 160px;
   transition: transform 0.2s ease;
@@ -1006,7 +1012,8 @@ h1 {
 
 .preview-box {
   width: 100%;
-  aspect-ratio: 1.585; /* 身份证宽高比 */
+  aspect-ratio: 1.585;
+  /* 身份证宽高比 */
   border: 1px dashed #ccc;
   display: flex;
   justify-content: center;
@@ -1024,7 +1031,8 @@ h1 {
 .preview-box img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* 保持图片比例 */
+  object-fit: contain;
+  /* 保持图片比例 */
 }
 
 .placeholder {
@@ -1036,7 +1044,8 @@ h1 {
 .recrop-button {
   padding: 0.375rem 0.75rem;
   font-size: 0.8125rem;
-  background-color: #6c757d; /* 灰色 */
+  background-color: #6c757d;
+  /* 灰色 */
   border-radius: 4px;
   width: 100%;
 }
@@ -1048,9 +1057,11 @@ h1 {
 /* A4 Canvas 样式 */
 .a4-canvas {
   width: 100%;
-  max-width: 595px; /* A4宽度，72dpi */
+  max-width: 595px;
+  /* A4宽度，72dpi */
   height: auto;
-  aspect-ratio: 1 / 1.414; /* A4比例 */
+  aspect-ratio: 1 / 1.414;
+  /* A4比例 */
   border: 1px solid #e0e0e0;
   background-color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -1058,18 +1069,19 @@ h1 {
 }
 
 /* Cropper Modal 样式 */
-.cropper-modal {
+.custom-cropper-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.9); /* 增加不透明度从0.7到0.9 */
+  background-color: rgba(0, 0, 0, 1);
+  /* 改为完全不透明 */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* 确保在最上层 */
-  backdrop-filter: blur(5px); /* 添加模糊效果增强分离感 */
+  z-index: 1000;
+  /* 确保在最上层 */
 }
 
 .cropper-content {
@@ -1077,20 +1089,36 @@ h1 {
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
-  max-width: 90vw; /* 最大宽度 */
-  max-height: 90vh; /* 最大高度 */
+  max-width: 90vw;
+  /* 最大宽度 */
+  max-height: 90vh;
+  /* 最大高度 */
   display: flex;
   flex-direction: column;
-  color: #333; /* 设置文字颜色 */
+  color: #333;
+  /* 设置文字颜色 */
   width: 100%;
+  position: relative;
+  /* 添加定位属性 */
+  z-index: 1010;
+  /* 确保内容在背景之上 */
 }
 
 .cropper-image-container {
-  flex-grow: 1; /* 占据剩余空间 */
-  overflow: hidden; /* 隐藏超出部分 */
+  flex-grow: 1;
+  /* 占据剩余空间 */
+  overflow: hidden;
+  /* 隐藏超出部分 */
   margin-bottom: 1rem;
   /* 限制 cropperjs 容器大小 */
-  max-height: calc(80vh - 150px); /* 限制最大高度 */
+  max-height: calc(80vh - 150px);
+  /* a限制最大高度 */
+  background-color: #f8f8f8;
+  /* 添加背景色以便于区分身份证边缘 */
+  border: 1px solid #e0e0e0;
+  /* 添加边框 */
+  border-radius: 4px;
+  /* 圆角 */
 }
 
 .cropper-image-container img {
@@ -1105,17 +1133,25 @@ h1 {
 }
 
 .confirm-crop-button {
-  background-color: #28a745; /* 绿色 */
+  background-color: #28a745;
+  /* 绿色 */
   flex: 1;
+  font-weight: 600;
+  /* 更醒目的字体 */
+  padding: 0.625rem 1rem;
+  /* 稍大一些的按钮 */
 }
+
 .confirm-crop-button:hover:not(:disabled) {
   background-color: #218838;
 }
 
 .cancel-crop-button {
-  background-color: #dc3545; /* 红色 */
+  background-color: #dc3545;
+  /* 红色 */
   flex: 1;
 }
+
 .cancel-crop-button:hover:not(:disabled) {
   background-color: #c82333;
 }
@@ -1127,7 +1163,8 @@ button {
   border-radius: 4px;
   padding: 0.5rem 1rem;
   color: white;
-  background-color: #1a73e8; /* 使用Google蓝 */
+  background-color: #1a73e8;
+  /* 使用Google蓝 */
   transition: all 0.3s ease;
   font-size: 0.9375rem;
   font-weight: 500;
@@ -1135,20 +1172,24 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background-color: #1765cc; /* 悬停时深蓝色 */
+  background-color: #1765cc;
+  /* 悬停时深蓝色 */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 button:disabled {
-  background-color: #e0e0e0; /* 禁用时浅灰色 */
+  background-color: #e0e0e0;
+  /* 禁用时浅灰色 */
   color: #9e9e9e;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .generate-button {
-  margin-top: 1.25rem; /* 与上方内容保持距离 */
-  background-color: #28a745; /* 绿色背景 */
+  margin-top: 1.25rem;
+  /* 与上方内容保持距离 */
+  background-color: #28a745;
+  /* 绿色背景 */
   padding: 0.625rem 1.5rem;
   font-size: 1rem;
   min-width: 200px;
@@ -1156,15 +1197,19 @@ button:disabled {
 }
 
 .generate-button:hover:not(:disabled) {
-  background-color: #218838; /* 悬停时深绿色 */
+  background-color: #218838;
+  /* 悬停时深绿色 */
   box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
   transform: translateY(-1px);
 }
 
-.modal-fade-enter-active, .modal-fade-leave-active {
-  transition: opacity 0.3s;
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
 }
-.modal-fade-enter-from, .modal-fade-leave-to {
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
   opacity: 0;
 }
 
@@ -1178,37 +1223,48 @@ button:disabled {
 /* 移动端适配媒体查询 */
 @media (max-width: 600px) {
   .id-scanner-container {
-    padding: 0.75rem; /* 减小内边距 */
-    border-radius: 0; /* 移动端通常不需要圆角 */
-    box-shadow: none; /* 移除阴影 */
+    padding: 0.75rem;
+    /* 减小内边距 */
+    border-radius: 0;
+    /* 移动端通常不需要圆角 */
+    box-shadow: none;
+    /* 移除阴影 */
     background-color: #fff;
   }
 
   h1 {
-    font-size: 1.5rem; /* 调整标题大小 */
+    font-size: 1.5rem;
+    /* 调整标题大小 */
     margin-bottom: 1.25rem;
   }
 
   .section-title {
-     font-size: 1.125rem;
-     margin-bottom: 0.875rem;
+    font-size: 1.125rem;
+    margin-bottom: 0.875rem;
   }
 
-  .camera-section, .preview-section, .canvas-section {
-    padding: 0.75rem; /* 减小内边距 */
-    margin-bottom: 1rem; /* 减小间距 */
+  .camera-section,
+  .preview-section,
+  .canvas-section {
+    padding: 0.75rem;
+    /* 减小内边距 */
+    margin-bottom: 1rem;
+    /* 减小间距 */
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
-  .video-wrapper, .video-placeholder {
-     max-width: 100%; /* 移动端可以更宽 */
-     margin-bottom: 0.75rem;
+  .video-wrapper,
+  .video-placeholder {
+    max-width: 100%;
+    /* 移动端可以更宽 */
+    margin-bottom: 0.75rem;
   }
 
   .toggle-camera-button {
     width: 100%;
-    margin: 0 auto 0.75rem auto; /* 居中并添加底部间距 */
+    margin: 0 auto 0.75rem auto;
+    /* 居中并添加底部间距 */
   }
 
   .capture-buttons {
@@ -1223,21 +1279,27 @@ button:disabled {
   }
 
   .image-previews {
-    flex-direction: row; /* 维持水平排列 */
-    justify-content: space-between; /* 分散对齐 */
-    gap: 0.625rem; /* 调整间距 */
+    flex-direction: row;
+    /* 维持水平排列 */
+    justify-content: space-between;
+    /* 分散对齐 */
+    gap: 0.625rem;
+    /* 调整间距 */
   }
 
   .preview-item {
-     max-width: 48%; /* 调整容器宽度，两列布局 */
+    max-width: 48%;
+    /* 调整容器宽度，两列布局 */
   }
 
   .preview-box {
-    width: 100%; /* 预览框占满容器 */
+    width: 100%;
+    /* 预览框占满容器 */
   }
 
   .recrop-button {
-    width: 100%; /* 按钮宽度与预览框一致 */
+    width: 100%;
+    /* 按钮宽度与预览框一致 */
     font-size: 0.75rem;
     padding: 0.375rem 0.5rem;
   }
@@ -1249,7 +1311,7 @@ button:disabled {
   }
 
   .cropper-image-container {
-     max-height: calc(85vh - 120px);
+    max-height: calc(85vh - 120px);
   }
 
   .cropper-actions {
@@ -1262,13 +1324,16 @@ button:disabled {
   }
 
   button {
-    padding: 0.625rem 0.875rem; /* 调整按钮大小 */
+    padding: 0.625rem 0.875rem;
+    /* 调整按钮大小 */
     font-size: 0.9375rem;
   }
 
   .generate-button {
-    width: 100%; /* 设置按钮宽度 */
-    margin: 1rem auto 0.625rem auto; /* 调整外边距并居中 */
+    width: 100%;
+    /* 设置按钮宽度 */
+    margin: 1rem auto 0.625rem auto;
+    /* 调整外边距并居中 */
     min-width: 0;
   }
 }
@@ -1279,54 +1344,68 @@ button:disabled {
     background-color: #121212;
     color: #e0e0e0;
   }
-  
-  h1, .section-title {
+
+  h1,
+  .section-title {
     color: #8ab4f8;
   }
-  
+
   .section-title::after {
     background-color: #8ab4f8;
   }
-  
-  .camera-section, .preview-section, .canvas-section {
+
+  .camera-section,
+  .preview-section,
+  .canvas-section {
     background-color: #1e1e1e;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   }
-  
-  .video-placeholder, .preview-box {
+
+  .video-placeholder,
+  .preview-box {
     background-color: #2d2d2d;
     border-color: #444;
     color: #aaa;
   }
-  
+
   .placeholder {
     color: #888;
   }
-  
+
   .a4-canvas {
     border-color: #444;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
-  
+
   .cropper-content {
     background-color: #1e1e1e;
     color: #e0e0e0;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
   }
-  
+
   button:disabled {
     background-color: #333;
     color: #777;
   }
-  
+
   .cropper-tip {
     color: #aaa;
   }
-  
+
   @media (max-width: 600px) {
     .id-scanner-container {
       background-color: #121212;
     }
+  }
+
+  .custom-cropper-modal {
+    background-color: #000;
+    /* 确保暗模式下也是完全不透明 */
+  }
+
+  .cropper-image-container {
+    background-color: #2d2d2d;
+    border-color: #444;
   }
 }
 </style>
