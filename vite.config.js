@@ -5,6 +5,7 @@ import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './', // 设置打包路径
   server: {
     host: true, // 允许通过 IP 访问
     https: true, // 启用 HTTPS
