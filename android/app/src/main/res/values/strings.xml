@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ID2PDF</string>
+    <string name="title_activity_main">ID2PDF</string>
+    <string name="package_name">com.id2pdf.app</string>
+    <string name="custom_url_scheme">com.id2pdf.app</string>
+</resources>
