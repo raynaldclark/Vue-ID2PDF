@@ -52,9 +52,11 @@ jobs:
       
       - name: Upload APK as release asset
         if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: android/app/build/outputs/apk/debug/app-debug.apk
-          asset_name: ID2PDF-debug.apk
+          name: ID2PDF-debug.apk
+          tag_name: v1.0.0
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
