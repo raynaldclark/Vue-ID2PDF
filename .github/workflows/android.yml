@@ -26,7 +26,7 @@ jobs:
       - name: Install Capacitor
         run: |
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          npx cap init "ID2PDF" "com.id2pdf.app" --web-dir=dist --ci
+          npx cap init "ID2PDF" "com.id2pdf.app" --web-dir=dist
       
       - name: Build web app
         run: npm run build
